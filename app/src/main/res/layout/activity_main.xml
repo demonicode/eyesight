@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="com.triplords.yajur.rajasthanhackathon.MainActivity"
+    android:layout_height="match_parent"
+    android:layout_width="match_parent">
+
+
+<RelativeLayout
+    android:layout_width="match_parent"
+    android:layout_gravity="center"
+    android:gravity="center"
+    android:id="@+id/mrl"
+    android:layout_height="match_parent"
+>
+
+    <SurfaceView
+        android:id="@+id/camera_viewz"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_centerHorizontal="true" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:textStyle="bold"
+        android:layout_centerInParent="true"
+        android:textSize="28sp"
+        android:text="Welcome!"
+        android:id="@+id/textView" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:textStyle="bold"
+        android:layout_centerHorizontal="true"
+        android:layout_below="@id/textView"
+        android:textSize="28sp"
+        android:text=""
+        android:id="@+id/textView2" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:textStyle="bold"
+        android:layout_centerHorizontal="true"
+        android:layout_below="@id/textView2"
+        android:textSize="28sp"
+        android:text=""
+        android:id="@+id/textView3" />
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:id="@+id/fl1"
+        android:background="#9e000000"
+        android:layout_height="match_parent">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_gravity="center"
+            android:text="Loading.."
+            android:textSize="20sp"
+            android:textColor="#eeeeee"
+            android:textStyle="bold"
+            android:layout_height="wrap_content" />
+    </FrameLayout>
+</RelativeLayout>
+</FrameLayout>

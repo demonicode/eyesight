@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_gravity="center"
+    tools:context="com.triplords.yajur.rajasthanhackathon.MenuActivity">
+
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/iv1"
+        android:layout_gravity="center"
+        android:layout_centerInParent="true"
+        />
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:background="#af000000"
+        android:orientation="vertical"
+        android:paddingTop="72dp"
+        android:paddingBottom="0dp"
+        android:layout_height="match_parent">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:textSize="24sp"
+            android:layout_gravity="center"
+            android:textStyle="bold"
+            android:textColor="#bbeeeeee"
+            android:text=""
+            android:id="@+id/tvv1"/>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="0dp"
+            android:textSize="24sp"
+            android:layout_gravity="center"
+            android:textStyle="bold"
+            android:layout_weight="1"
+            android:text=""
+            android:textColor="#bbeeeeee"
+            android:id="@+id/tvv2"/>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:layout_gravity="center"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:text=""
+            android:textColor="#bbeeeeee"
+            android:id="@+id/tvv3"/>
+
+    </LinearLayout>
+
+<FrameLayout
+    android:layout_width="match_parent"
+    android:layout_gravity="center"
+    android:background="#c9000000"
+    android:id="@+id/loadfl"
+    android:visibility="visible"
+    android:layout_height="match_parent">
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_gravity="center"
+        android:gravity="center"
+        android:text="Loading..."
+        android:textColor="#c3ffffff"
+        android:layout_height="wrap_content" />
+
+</FrameLayout>
+</FrameLayout>

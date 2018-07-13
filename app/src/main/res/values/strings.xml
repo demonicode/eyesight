@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">RajasthanHackathon</string>
+    <string name="insufficient_permissions">Insufficient Permissions</string>
+    <string name="permissions_camera_needed_explanation">This app requires the permission to access your camera to be able to gather facial images for processing. No video is saved or used other than for immediate emotion processing.</string>
+    <string name="permissions_storage_needed_explanation">This app requires the permission to access your external storage to save screenshots.</string>
+    <string name="understood">Understood</string>
+
+</resources>
