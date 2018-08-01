@@ -4,7 +4,9 @@ Android app to recognize emotions in live video feed and objects and text in sti
 
 Just build the app and install it on your android phone.
 
-Note - For proper working of the app, the phone has to be connected to the internet.
+Notes
+
+     - For proper working of the app, the phone has to be connected to the internet.
 
      - The text and object detection is temporarily down due to server issues. Will be running shortly.
      
