@@ -8,28 +8,32 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.speech.tts.TextToSpeech;
-import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
-import android.widget.TextView;
 
 import com.google.api.client.extensions.android.json.AndroidJsonFactory;
-import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.services.vision.v1.Vision;
 import com.google.api.services.vision.v1.VisionRequestInitializer;
-import com.google.api.services.vision.v1.model.AnnotateImageRequest;
-import com.google.api.services.vision.v1.model.BatchAnnotateImagesRequest;
-import com.google.api.services.vision.v1.model.BatchAnnotateImagesResponse;
 import com.google.api.services.vision.v1.model.Feature;
-import com.google.api.services.vision.v1.model.Image;
-import com.google.api.services.vision.v1.model.TextAnnotation;
+import com.google.gson.Gson;
+import com.microsoft.projectoxford.vision.VisionServiceClient;
+import com.microsoft.projectoxford.vision.VisionServiceRestClient;
+import com.microsoft.projectoxford.vision.contract.AnalysisResult;
+import com.microsoft.projectoxford.vision.contract.LanguageCodes;
+import com.microsoft.projectoxford.vision.contract.Line;
+import com.microsoft.projectoxford.vision.contract.OCR;
+import com.microsoft.projectoxford.vision.contract.Region;
+import com.microsoft.projectoxford.vision.contract.Word;
+import com.microsoft.projectoxford.vision.rest.VisionServiceException;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -39,31 +43,117 @@ import java.util.Locale;
 
 public class OCRActivity extends AppCompatActivity implements TextToSpeech.OnInitListener {
 
-    private TextView tvv2;
-            //,tvv2,tvv3;
     private Vision vision;
     private Feature feature;
     private Bitmap bitmap;
     private static final int CAMERA_REQUEST_CODE = 102;
     private static final int RECORD_REQUEST_CODE = 101;
-    private String api = "TEXT_DETECTION";
+    private String api = "LABEL_DETECTION";
+    private String captiony;
     private ImageView IV1;
     private TextToSpeech tts;
     private FrameLayout flLoad;
-
-
+    private VisionServiceClient client;
+    private EditText mEditText;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_menu);
+        setContentView(R.layout.activity_ocr);
         tts = new TextToSpeech(this,this);
-        //tvv1=(TextView)this.findViewById(R.id.tvv1);
-        tvv2=(TextView)this.findViewById(R.id.tvv2);
-        //tvv3=(TextView)this.findViewById(R.id.tvv3);
+
+        mEditText = (EditText)findViewById(R.id.editText3);
         flLoad=(FrameLayout)this.findViewById(R.id.loadfl);
         flLoad.setVisibility(View.VISIBLE);
         initialize();
+        if (client==null){
+            client = new VisionServiceRestClient(getString(R.string.subscription_key), getString(R.string.subscription_apiroot));
+        }
 
+    }
+
+    private class doRequest extends AsyncTask<String, String, String> {
+        // Store error message
+        private Exception e = null;
+
+        public doRequest() {
+        }
+
+        @Override
+        protected String doInBackground(String... args) {
+            try {
+                return process();
+            } catch (Exception e) {
+                this.e = e;    // Store error
+            }
+
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(String data) {
+            super.onPostExecute(data);
+            // Display based on error existence
+            Log.d("yoyo", "123456");
+            flLoad.setVisibility(View.INVISIBLE);
+            mEditText.setText("");
+            if (e != null) {
+                mEditText.setText("Error: " + e.getMessage());
+                this.e = null;
+            } else {
+                    Gson gson = new Gson();
+                    OCR r = gson.fromJson(data, OCR.class);
+
+                    String result = "";
+                    for (Region reg : r.regions) {
+                        for (Line line : reg.lines) {
+                            for (Word word : line.words) {
+                                result += word.text + " ";
+                            }
+                            result += "\n";
+                        }
+                        result += "\n\n";
+                    }
+
+                    mEditText.setText(result);
+                tts.speak(result, TextToSpeech.QUEUE_FLUSH, null, null);
+                }
+            }
+
+
+    }
+
+
+    private String process() throws VisionServiceException, IOException {
+        Gson gson = new Gson();
+        Log.v("ishere","0");
+
+        // Put the image into an input stream for detection.
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, output);
+        ByteArrayInputStream inputStream = new ByteArrayInputStream(output.toByteArray());
+
+        Log.v("ishere","1");
+
+        OCR ocr;
+        ocr = this.client.recognizeText(inputStream, LanguageCodes.AutoDetect, true);
+        Log.v("ishere","2");
+
+        String result = gson.toJson(ocr);
+        Log.d("result", result);
+        Log.v("ishere","3");
+
+
+        return result;
+    }
+    public void doRecognize() {
+        mEditText.setText("Analyzing...");
+
+        try {
+            new doRequest().execute();
+        } catch (Exception e)
+        {
+            mEditText.setText("Error encountered. Exception is: " + e.toString());
+        }
     }
 
     @Override
@@ -79,15 +169,7 @@ public class OCRActivity extends AppCompatActivity implements TextToSpeech.OnIni
             Log.e("err","Init Failed");
     }
 
-    private void speakOut()
-    {
-        String text="";
-        if(tvv2.getText()!=null) {
-            text +=tvv2.getText().toString();
-        }
-        tts.speak(text, TextToSpeech.QUEUE_FLUSH, null, null);
 
-    }
 
     public void takePictureFromCamera() {
         Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
@@ -99,9 +181,20 @@ public class OCRActivity extends AppCompatActivity implements TextToSpeech.OnIni
     protected void onActivityResult(int requestCode, int resultCode,
                                     Intent data) {
         if (requestCode == CAMERA_REQUEST_CODE && resultCode == RESULT_OK) {
-            bitmap = (Bitmap) data.getExtras().get("data");
+
+            // mImageUri = data.getData();
+
+            try {
+                bitmap = (Bitmap) data.getExtras().get("data");
+            }
+            catch (Exception e)
+            {
+                Log.v("Helluu",e.toString());
+            }
             IV1.setImageBitmap(bitmap);
-            callCloudVision(bitmap, feature);
+            //callCloudVision(bitmap, feature);
+
+            doRecognize();
         }
     }
 
@@ -120,8 +213,8 @@ public class OCRActivity extends AppCompatActivity implements TextToSpeech.OnIni
 
 
         feature = new Feature();
-        feature.setType("TEXT_DETECTION");
-        //feature.setMaxResults(3);
+        feature.setType("LABEL_DETECTION");
+        feature.setMaxResults(3);
 
         takePictureFromCamera();
 
@@ -152,77 +245,9 @@ public class OCRActivity extends AppCompatActivity implements TextToSpeech.OnIni
                 finish();
             }
         }
-    }
 
+}
 
-
-    private void callCloudVision(final Bitmap bitmap, final Feature feature)
-    {
-        final List<Feature> featureList = new ArrayList<>();
-        featureList.add(feature);
-
-
-        final List<AnnotateImageRequest> annotateImageRequests = new ArrayList<>();
-
-        AnnotateImageRequest annotateImageReq = new AnnotateImageRequest();
-        annotateImageReq.setFeatures(featureList);
-        annotateImageReq.setImage(getImageEncodeImage(bitmap));
-        annotateImageRequests.add(annotateImageReq);
-        new AsyncTask<Object, Void, String>() {
-            @Override
-            protected String doInBackground(Object... params) {
-                try {
-                    VisionRequestInitializer requestInitializer = new VisionRequestInitializer("AIzaSyBRtN8i0QzYXmsxkoWwbWlyzgH8uRg9r9k");
-
-                    Vision.Builder builder = new Vision.Builder(
-                            new NetHttpTransport(),
-                            new AndroidJsonFactory(),
-                            null);
-                    builder.setVisionRequestInitializer(requestInitializer);
-                    Vision vision = builder.build();
-
-                    BatchAnnotateImagesRequest batchAnnotateImagesRequest = new BatchAnnotateImagesRequest();
-                    batchAnnotateImagesRequest.setRequests(annotateImageRequests);
-
-                    Vision.Images.Annotate annotateRequest = vision.images().annotate(batchAnnotateImagesRequest);
-                    annotateRequest.setDisableGZipContent(true);
-                    BatchAnnotateImagesResponse response = annotateRequest.execute();
-                    final TextAnnotation text = response.getResponses()
-                            .get(0).getFullTextAnnotation();
-                    if(text!=null)
-                    if(text.getText()!=null)
-                    return text.getText().toString();
-                    else
-                        return null;
-                } catch (GoogleJsonResponseException e) {
-                    Log.d("tagtag", "failed to make API request because " + e.getContent());
-                } catch (IOException e) {
-                    Log.d("tagtag", "failed to make API request because of other IOException " + e.getMessage());
-                }
-                return null;
-            }
-
-            protected void onPostExecute(String result) {
-                if(result!=null) {
-                    flLoad.setVisibility(View.GONE);
-                    tvv2.setText(result);
-                    speakOut();
-                }
-            }
-        }.execute();
-    }
-
-
-    @NonNull
-    private Image getImageEncodeImage(Bitmap bitmap) {
-        Image base64EncodedImage = new Image();
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        bitmap.compress(Bitmap.CompressFormat.JPEG, 90, byteArrayOutputStream);
-        byte[] imageBytes = byteArrayOutputStream.toByteArray();
-
-        base64EncodedImage.encodeContent(imageBytes);
-        return base64EncodedImage;
-    }
 
 
 }

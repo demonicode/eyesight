@@ -14,6 +14,7 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -30,7 +31,14 @@ import com.google.api.services.vision.v1.model.BatchAnnotateImagesResponse;
 import com.google.api.services.vision.v1.model.EntityAnnotation;
 import com.google.api.services.vision.v1.model.Feature;
 import com.google.api.services.vision.v1.model.Image;
+import com.google.gson.Gson;
+import com.microsoft.projectoxford.vision.VisionServiceClient;
+import com.microsoft.projectoxford.vision.VisionServiceRestClient;
+import com.microsoft.projectoxford.vision.contract.AnalysisResult;
+import com.microsoft.projectoxford.vision.contract.Caption;
+import com.microsoft.projectoxford.vision.rest.VisionServiceException;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -40,30 +48,119 @@ import java.util.Locale;
 
 public class MenuActivity extends AppCompatActivity implements TextToSpeech.OnInitListener{
 
-    private TextView tvv1,tvv2,tvv3;
     private Vision vision;
     private Feature feature;
     private Bitmap bitmap;
     private static final int CAMERA_REQUEST_CODE = 102;
     private static final int RECORD_REQUEST_CODE = 101;
     private String api = "LABEL_DETECTION";
+    private String captiony;
     private ImageView IV1;
     private TextToSpeech tts;
     private FrameLayout flLoad;
-
-
+    private VisionServiceClient client;
+    private EditText mEditText;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_menu);
         tts = new TextToSpeech(this,this);
-        tvv1=(TextView)this.findViewById(R.id.tvv1);
-        tvv2=(TextView)this.findViewById(R.id.tvv2);
-        tvv3=(TextView)this.findViewById(R.id.tvv3);
+
+        mEditText = (EditText)findViewById(R.id.editText2);
         flLoad=(FrameLayout)this.findViewById(R.id.loadfl);
         flLoad.setVisibility(View.VISIBLE);
         initialize();
+        if (client==null){
+            client = new VisionServiceRestClient(getString(R.string.subscription_key), getString(R.string.subscription_apiroot));
+        }
 
+    }
+
+    private class doRequest extends AsyncTask<String, String, String> {
+        // Store error message
+        private Exception e = null;
+
+        public doRequest() {
+        }
+
+        @Override
+        protected String doInBackground(String... args) {
+            try {
+                return process();
+            } catch (Exception e) {
+                this.e = e;    // Store error
+            }
+
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(String data) {
+            super.onPostExecute(data);
+            // Display based on error existence
+            //Log.d("yoyo", "123456");
+            flLoad.setVisibility(View.INVISIBLE);
+            mEditText.setText("");
+            if (e != null) {
+                mEditText.setText("Error: " + e.getMessage());
+                this.e = null;
+            } else {
+                Gson gson = new Gson();
+                AnalysisResult result = gson.fromJson(data, AnalysisResult.class);
+
+               // mEditText.append("Image format: " + result.metadata.format + "\n");
+                //mEditText.append("Image width: " + result.metadata.width + ", height:" + result.metadata.height + "\n");
+                //mEditText.append("\n");
+
+                for (Caption caption: result.description.captions) {
+                    mEditText.append(caption.text + "\n");
+                }
+                captiony = mEditText.getText().toString();
+
+                tts.speak(captiony, TextToSpeech.QUEUE_FLUSH, null, null);
+                /*
+                caption.confidence +
+                mEditText.append("\n");
+
+                for (String tag: result.description.tags) {
+                    mEditText.append("Tag: " + tag + "\n");
+                }
+                mEditText.append("\n");
+
+                mEditText.append("\n--- Raw Data ---\n\n");
+                mEditText.append(data);
+                mEditText.setSelection(0);
+                */
+            }
+
+        }
+    }
+
+
+    private String process() throws VisionServiceException, IOException {
+        Gson gson = new Gson();
+
+        // Put the image into an input stream for detection.
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, output);
+        ByteArrayInputStream inputStream = new ByteArrayInputStream(output.toByteArray());
+
+        AnalysisResult v = this.client.describe(inputStream, 1);
+
+        String result = gson.toJson(v);
+        Log.d("result", result);
+
+        return result;
+    }
+    public void doDescribe() {
+        mEditText.setText("Describing...");
+
+        try {
+            new doRequest().execute();
+        } catch (Exception e)
+        {
+            mEditText.setText("Error encountered. Exception is: " + e.toString());
+        }
     }
 
     @Override
@@ -79,22 +176,7 @@ public class MenuActivity extends AppCompatActivity implements TextToSpeech.OnIn
             Log.e("err","Init Failed");
     }
 
-    private void speakOut()
-    {
-        String text="";
-        if(tvv1.getText()!=null) {
-            text += tvv1.getText().toString();
-        }
-        if(tvv2.getText()!=null) {
-            text += ", "+tvv1.getText().toString();
-        }
-        if(tvv3.getText()!=null) {
-            text += "and "+tvv1.getText().toString()+ " describe your surroundings.";
-        }
 
-        tts.speak(text, TextToSpeech.QUEUE_FLUSH, null, null);
-
-    }
 
     public void takePictureFromCamera() {
         Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
@@ -106,9 +188,14 @@ public class MenuActivity extends AppCompatActivity implements TextToSpeech.OnIn
     protected void onActivityResult(int requestCode, int resultCode,
                                     Intent data) {
         if (requestCode == CAMERA_REQUEST_CODE && resultCode == RESULT_OK) {
+
+           // mImageUri = data.getData();
+
             bitmap = (Bitmap) data.getExtras().get("data");
             IV1.setImageBitmap(bitmap);
-            callCloudVision(bitmap, feature);
+            //callCloudVision(bitmap, feature);
+
+            doDescribe();
         }
     }
 
@@ -163,101 +250,9 @@ public class MenuActivity extends AppCompatActivity implements TextToSpeech.OnIn
 
 
 
-    private void callCloudVision(final Bitmap bitmap, final Feature feature)
-    {
-        final List<Feature> featureList = new ArrayList<>();
-        featureList.add(feature);
-
-        final List<AnnotateImageRequest> annotateImageRequests = new ArrayList<>();
-
-        AnnotateImageRequest annotateImageReq = new AnnotateImageRequest();
-        annotateImageReq.setFeatures(featureList);
-        annotateImageReq.setImage(getImageEncodeImage(bitmap));
-        annotateImageRequests.add(annotateImageReq);
-        new AsyncTask<Object, Void, String[]>() {
-            @Override
-            protected String[] doInBackground(Object... params) {
-                try {
-                    VisionRequestInitializer requestInitializer = new VisionRequestInitializer("AIzaSyBRtN8i0QzYXmsxkoWwbWlyzgH8uRg9r9k");
-
-                    Vision.Builder builder = new Vision.Builder(
-                            new NetHttpTransport(),
-                            new AndroidJsonFactory(),
-                            null);
-                    builder.setVisionRequestInitializer(requestInitializer);
-                    Vision vision = builder.build();
-
-                    BatchAnnotateImagesRequest batchAnnotateImagesRequest = new BatchAnnotateImagesRequest();
-                    batchAnnotateImagesRequest.setRequests(annotateImageRequests);
-
-                    Vision.Images.Annotate annotateRequest = vision.images().annotate(batchAnnotateImagesRequest);
-                    annotateRequest.setDisableGZipContent(true);
-                    BatchAnnotateImagesResponse response = annotateRequest.execute();
-                    return convertResponseToString(response);
-                } catch (GoogleJsonResponseException e) {
-                    Log.d("tagtag", "failed to make API request because " + e.getContent());
-                } catch (IOException e) {
-                    Log.d("tagtag", "failed to make API request because of other IOException " + e.getMessage());
-                }
-                return null;
-            }
-
-            protected void onPostExecute(String[] result) {
-                //int j=0;
-                //for(j=0;j<result.length;j++)
-                //Log.v("resultResult",result[j]);
-                flLoad.setVisibility(View.GONE);
-                tvv1.setText(result[0]);
-                tvv2.setText(result[1]);
-                tvv3.setText(result[2]);
-                speakOut();
-            }
-        }.execute();
-    }
-
-
-    @NonNull
-    private Image getImageEncodeImage(Bitmap bitmap) {
-        Image base64EncodedImage = new Image();
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        bitmap.compress(Bitmap.CompressFormat.JPEG, 90, byteArrayOutputStream);
-        byte[] imageBytes = byteArrayOutputStream.toByteArray();
-
-        base64EncodedImage.encodeContent(imageBytes);
-        return base64EncodedImage;
-    }
-
-
-    private String[] convertResponseToString(BatchAnnotateImagesResponse response) {
-
-        AnnotateImageResponse imageResponses = response.getResponses().get(0);
-        List<EntityAnnotation> entityAnnotations;
-
-        String message[] = {};
-        switch (api) {
-            case "LABEL_DETECTION":
-                entityAnnotations = imageResponses.getLabelAnnotations();
-                message = formatAnnotation(entityAnnotations);
-                break;
-        }
-        return message;
-    }
 
 
 
-    private String[] formatAnnotation(List<EntityAnnotation> entityAnnotation) {
-        String[] message = {"","",""};
-        String i; int j=0;
-
-        if (entityAnnotation != null) {
-            for (EntityAnnotation entity : entityAnnotation) {
-                i =entity.getDescription();
-                message[j]=i;
-                j++;
-            }
-        }
-        return message;
-    }
 
 
 }

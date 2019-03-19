@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="oval">
+            <solid android:color="#EF9A9A" />
+        </shape>
+    </item>
+
+    <item
+        android:bottom="26dp"
+        android:drawable="@drawable/microphone"
+        android:left="26dp"
+        android:right="26dp"
+        android:top="26dp" />
+
+</layer-list>

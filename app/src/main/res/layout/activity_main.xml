@@ -28,6 +28,7 @@
         android:textStyle="bold"
         android:layout_centerInParent="true"
         android:textSize="28sp"
+        android:textColor="#ffffff"
         android:text="Welcome!"
         android:id="@+id/textView" />
 
@@ -39,6 +40,7 @@
         android:layout_centerHorizontal="true"
         android:layout_below="@id/textView"
         android:textSize="28sp"
+        android:textColor="#ffffff"
         android:text=""
         android:id="@+id/textView2" />
 
@@ -50,6 +52,7 @@
         android:layout_centerHorizontal="true"
         android:layout_below="@id/textView2"
         android:textSize="28sp"
+        android:textColor="#ffffff"
         android:text=""
         android:id="@+id/textView3" />
 

@@ -4,5 +4,9 @@
     <string name="permissions_camera_needed_explanation">This app requires the permission to access your camera to be able to gather facial images for processing. No video is saved or used other than for immediate emotion processing.</string>
     <string name="permissions_storage_needed_explanation">This app requires the permission to access your external storage to save screenshots.</string>
     <string name="understood">Understood</string>
+    <string name="subscription_key">36d63ded5a054d3bbb42838227bbeeef</string>
+    <string name="subscription_apiroot">https://westcentralus.api.cognitive.microsoft.com/vision/v1.0</string>
+    <string name="add_subscription_key_tip_title">Subscription Key is Needed</string>
+    <string name="add_subscription_key_tip">Please put your subscription key to source file \"app/res/values/strings.xml\" to enable Vision API calls.</string>
 
 </resources>

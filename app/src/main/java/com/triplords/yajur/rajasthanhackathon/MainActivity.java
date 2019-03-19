@@ -1,9 +1,13 @@
 package com.triplords.yajur.rajasthanhackathon;
 
 import android.Manifest;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.PointF;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.speech.tts.TextToSpeech;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
@@ -41,12 +45,14 @@ public class MainActivity extends AppCompatActivity implements CameraDetector.Ca
     private TextToSpeech tts;
     private TextView tv3;
     private int curr=0;
+    boolean first;
 
     @SuppressWarnings("SuspiciousNameCombination")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        first = true;
         //startActivity(new Intent(this,ActualMenu.class));
         tv = (TextView) this.findViewById(R.id.textView);
         tts = new TextToSpeech(this,this);
@@ -108,10 +114,33 @@ public class MainActivity extends AppCompatActivity implements CameraDetector.Ca
             Face.GLASSES glassesValue = face.appearance.getGlasses();
             Face.AGE ageValue = face.appearance.getAge();
 
+
             float joy = face.emotions.getJoy();
             float anger = face.emotions.getAnger();
             float surprise = face.emotions.getSurprise();
             float sadness = face.emotions.getSadness();
+
+
+            int a = face.getFacePoints().length;
+            PointF aa [] = face.getFacePoints();
+
+            for(int ii =0 ; (ii < a) && first ; ii++)
+            {
+
+                Log.v("xxxxxx",String.valueOf(aa[ii].x));
+                if (ii==a-1) {
+                    first = false;
+                    for(ii =0 ; (ii < a) ; ii++)
+                    {
+
+                        Log.v("yyyyy",String.valueOf(aa[ii].y));
+                        if (ii==a-1)
+                            first = false;
+                    }
+                }
+            }
+
+
 
             if (anger > 50.00) {
                 tv.setText("Angry!");
@@ -120,21 +149,21 @@ public class MainActivity extends AppCompatActivity implements CameraDetector.Ca
                 curr=1;
             }
 
-            else if (sadness > 47.00) {
+            else if (sadness > 45.00) {
                 tv.setText("Sad");
                 if(curr!=2)
                 speakOut();
                 curr=2;
             }
 
-            else if (surprise > 45.00) {
+            else if (surprise > 38.00) {
                 tv.setText("Surprised");
                 if(curr!=3)
                 speakOut();
                 curr=3;
             }
 
-            else if (joy > 83.00) {
+            else if (joy > 80.00) {
                 tv.setText("Happy!");
                 if(curr!=4)
                 speakOut();
@@ -170,7 +199,7 @@ public class MainActivity extends AppCompatActivity implements CameraDetector.Ca
                 else if (ageValue.equals(Face.AGE.AGE_65_PLUS))
                     av = ">65";
                 String s = tv2.getText().toString();
-                tv2.setText(s + "(" + av + " yrs)");
+                tv2.setText(s);
             } else
             {
                 if(genderValue.equals(Face.GENDER.FEMALE))
@@ -185,7 +214,6 @@ public class MainActivity extends AppCompatActivity implements CameraDetector.Ca
             if(glassesValue.equals(Face.GLASSES.YES))
                 tv3.setText("Wearing Glasses");
 
-            PointF a[] = face.getFacePoints();
 
 
         }
@@ -247,9 +275,10 @@ public class MainActivity extends AppCompatActivity implements CameraDetector.Ca
     }
 
 
+
     private void initCamDetector()
     {
-        detector = new CameraDetector(this, CameraDetector.CameraType.CAMERA_BACK, cameraView, 1 , Detector.FaceDetectorMode.LARGE_FACES);
+        detector = new CameraDetector(this, CameraDetector.CameraType.CAMERA_FRONT, cameraView, 1 , Detector.FaceDetectorMode.LARGE_FACES);
         detector.setSendUnprocessedFrames(true);
         detector.setFaceListener(this);
         detector.setImageListener(this);
